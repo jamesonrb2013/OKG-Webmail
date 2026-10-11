@@ -1,6 +1,6 @@
 FROM node:24-alpine
 
-RUN apk add --no-cache python3 make g++ sqlite
+RUN apk add --no-cache python3 make g++ sqlite sqlite-dev
 WORKDIR /app
 
 COPY package*.json ./
