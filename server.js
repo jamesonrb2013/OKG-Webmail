@@ -75,9 +75,9 @@ function escapeHtml(value = "") {
 }
 function page(title, content, user = null, notice = "") {
   const nav = user
-    ? `<header><a class="brand" href="/">OKG<span>Mail</span></a><div class="nav-right"><span class="user-tag">${escapeHtml(user.username)}</span><form method="post" action="/logout"><button class="button ghost" type="submit">Log out</button></form></div></header>`
-    : `<header><a class="brand" href="/">OKG<span>Mail</span></a><span class="user-tag">One inbox. Your account.</span></header>`;
-  return `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="color-scheme" content="dark"><title>${escapeHtml(title)} · OKG Mail</title><link rel="stylesheet" href="/style.css"></head><body>${nav}<main>${notice ? `<div class="notice">${escapeHtml(notice)}</div>` : ""}${content}</main><footer>OKG Webmail · Connects to your existing mail provider</footer></body></html>`;
+    ? `<header><a class="brand" href="/">OKG<span>Mail</span></a><div class="nav-right"><span class="user-tag">Workspace · ${escapeHtml(user.username)}</span><form method="post" action="/logout"><button class="button ghost" type="submit">Log out</button></form></div></header>`
+    : `<header><a class="brand" href="/">OKG<span>Mail</span></a><span class="user-tag">Private email workspace</span></header>`;
+  return `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="color-scheme" content="light"><title>${escapeHtml(title)} · OKG Mail</title><link rel="stylesheet" href="/style.css"></head><body>${nav}<main>${notice ? `<div class="notice">${escapeHtml(notice)}</div>` : ""}${content}</main><footer>OKG Webmail · Connects to your existing mail provider</footer></body></html>`;
 }
 function requireAuth(req, res, next) {
   if (!req.session.userId) return res.redirect("/login");
@@ -125,8 +125,8 @@ function mailboxCard(box) {
 function dashboard(req, res, notice = "") {
   const user = getUser(req);
   const boxes = db.prepare("SELECT * FROM mailboxes WHERE user_id = ? ORDER BY id DESC").all(user.id);
-  const cards = boxes.length ? boxes.map(mailboxCard).join("") : '<div class="empty"><div class="empty-icon">✉</div><h2>No inbox connected yet</h2><p>Connect your FounderMail mailbox to get started.</p></div>';
-  const content = `<section class="hero"><div class="eyebrow">YOUR OKG WORKSPACE</div><h1>Email, without the chaos.</h1><p>Connect your existing inboxes and manage them here.</p><a class="button primary" href="/connect">＋ Connect mailbox</a></section><section class="section-head"><div><h2>Your mailboxes</h2><p>Only you can access the mailboxes connected to your account.</p></div><span class="count">${boxes.length} connected</span></section><section class="mailbox-list">${cards}</section>`;
+  const cards = boxes.length ? boxes.map(mailboxCard).join("") : '<div class="empty"><div class="empty-icon">✉</div><h2>Your workspace is ready</h2><p>Connect your FounderMail or other supported mailbox to see your messages here.</p></div>';
+  const content = `<section class="hero"><div class="eyebrow">YOUR OKG WORKSPACE</div><h1>Your email, all in one place.</h1><p>Connect your existing mailbox to read, organize, and send messages from one clean workspace.</p><a class="button primary" href="/connect">＋ Connect a mailbox</a></section><section class="section-head"><div><h2>Connected mailboxes</h2><p>Your inboxes, together in one place.</p></div><span class="count">${boxes.length} ${boxes.length === 1 ? "mailbox" : "mailboxes"}</span></section><section class="mailbox-list">${cards}</section>`;
   res.send(page("Dashboard", content, user, notice));
 }
 
