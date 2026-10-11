@@ -164,7 +164,9 @@ app.post("/register", authLimiter, async (req, res) => {
   const username = String(req.body.username || "").trim();
   const password = String(req.body.password || "");
   const code = String(req.body.code || "");
-  if (!REGISTRATION_CODE || !crypto.timingSafeEqual(Buffer.from(code.padEnd(REGISTRATION_CODE.length).slice(0, REGISTRATION_CODE.length)), Buffer.from(REGISTRATION_CODE))) {
+  const suppliedCode = Buffer.from(code);
+  const expectedCode = Buffer.from(REGISTRATION_CODE || "");
+  if (!REGISTRATION_CODE || suppliedCode.length !== expectedCode.length || !crypto.timingSafeEqual(suppliedCode, expectedCode)) {
     return res.status(403).send(page("Registration unavailable", '<section class="auth-card"><h1>Registration unavailable</h1><p>Ask the OKG owner for the correct registration setup.</p><a href="/login">Back to login</a></section>'));
   }
   if (!/^[A-Za-z0-9_.-]{3,32}$/.test(username) || password.length < 12 || password.length > 128) {
@@ -280,10 +282,11 @@ app.get("/mail/:id/message/:uid", requireAuth, async (req, res) => {
       return simpleParser(await streamToBuffer(downloaded.content));
     });
     const from = parsed.from?.text || "Unknown sender";
+    const replyTo = parsed.from?.value?.[0]?.address || "";
     const to = parsed.to?.text || "";
     const date = parsed.date ? parsed.date.toLocaleString() : "";
     const body = parsed.text ? escapeHtml(parsed.text) : "This message has no plain-text body.";
-    const content = `<a class="back" href="/mail/${box.id}">← Back to inbox</a><article class="email-view"><div class="email-actions"><a class="button" href="/mail/${box.id}/compose?to=${encodeURIComponent(from)}&subject=${encodeURIComponent("Re: " + (parsed.subject || ""))}">Reply</a></div><h1>${escapeHtml(parsed.subject || "(no subject)")}</h1><div class="email-meta"><strong>From:</strong> ${escapeHtml(from)}<br><strong>To:</strong> ${escapeHtml(to)}<br><strong>Date:</strong> ${escapeHtml(date)}</div><pre class="email-body">${body}</pre></article>`;
+    const content = `<a class="back" href="/mail/${box.id}">← Back to inbox</a><article class="email-view"><div class="email-actions"><a class="button" href="/mail/${box.id}/compose?to=${encodeURIComponent(replyTo)}&subject=${encodeURIComponent("Re: " + (parsed.subject || ""))}">Reply</a></div><h1>${escapeHtml(parsed.subject || "(no subject)")}</h1><div class="email-meta"><strong>From:</strong> ${escapeHtml(from)}<br><strong>To:</strong> ${escapeHtml(to)}<br><strong>Date:</strong> ${escapeHtml(date)}</div><pre class="email-body">${body}</pre></article>`;
     res.send(page("Message", content, getUser(req)));
   } catch (err) {
     console.error("Message load failed:", err.message);
