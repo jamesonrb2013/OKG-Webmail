@@ -122,7 +122,7 @@ function streamToBuffer(stream) {
 function mailboxCard(box) {
   return `<div class="mailbox-card"><div><strong>${escapeHtml(box.email)}</strong><small>${escapeHtml(box.imap_host)} · IMAP ${box.imap_port}</small></div><div class="actions"><a class="button" href="/mail/${box.id}">Open inbox</a><form method="post" action="/mailboxes/${box.id}/delete" onsubmit="return confirm('Remove this connected mailbox?')"><button class="button danger" type="submit">Remove</button></form></div></div>`;
 }
-function dashboard(req, notice = "") {
+function dashboard(req, res, notice = "") {
   const user = getUser(req);
   const boxes = db.prepare("SELECT * FROM mailboxes WHERE user_id = ? ORDER BY id DESC").all(user.id);
   const cards = boxes.length ? boxes.map(mailboxCard).join("") : '<div class="empty"><div class="empty-icon">✉</div><h2>No inbox connected yet</h2><p>Connect your FounderMail mailbox to get started.</p></div>';
@@ -155,7 +155,7 @@ const authLimiter = rateLimit({ windowMs: 15 * 60 * 1000, limit: 12, standardHea
 app.use("/style.css", express.static(path.join(__dirname, "public"), { maxAge: "1h" }));
 app.get("/health", (_req, res) => res.status(200).json({ ok: true, service: "okg-webmail" }));
 
-app.get("/", (req, res) => req.session.userId ? dashboard(req) : res.redirect("/login"));
+app.get("/", (req, res) => req.session.userId ? dashboard(req, res) : res.redirect("/login"));
 app.get("/register", (_req, res) => {
   const content = `<section class="auth-card"><div class="eyebrow">GET STARTED</div><h1>Create your account</h1><p>Make your own private OKG Webmail login.</p><form method="post" action="/register"><label>Username<input name="username" minlength="3" maxlength="32" pattern="[A-Za-z0-9_.-]+" required autocomplete="username"></label><label>Password<input name="password" type="password" minlength="12" maxlength="128" required autocomplete="new-password"><small>Use at least 12 characters.</small></label><label>Staff registration code<input name="code" type="password" required autocomplete="off"></label><button class="button primary full" type="submit">Create account</button></form><p class="switch">Already registered? <a href="/login">Log in</a></p></section>`;
   res.send(page("Register", content, null, REGISTRATION_CODE ? "" : "Registration is currently disabled until the owner sets REGISTRATION_CODE on the server."));
@@ -231,7 +231,7 @@ app.post("/connect", requireAuth, authLimiter, async (req, res) => {
     await client.logout();
     db.prepare("INSERT INTO mailboxes (user_id, email, imap_host, imap_port, smtp_host, smtp_port, credentials_enc) VALUES (?, ?, ?, ?, ?, ?, ?)")
       .run(req.session.userId, email, imapHost, imapPort, smtpHost, smtpPort, encrypt({ password }));
-    dashboard(req, "Mailbox connected successfully.");
+    dashboard(req, res, "Mailbox connected successfully.");
   } catch (err) {
     console.error("Mailbox connection failed:", err.message);
     res.status(400).send(page("Connection failed", '<section class="auth-card"><h1>Could not connect</h1><p>Check the email address, mailbox password, IMAP hostname, and port. No mailbox was saved.</p><a href="/connect">Try again</a></section>', getUser(req)));
