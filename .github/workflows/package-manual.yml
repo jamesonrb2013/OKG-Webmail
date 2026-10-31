@@ -2,8 +2,6 @@ name: Package OKG Mail for manual recovery
 on:
   push:
     branches: [main]
-    paths:
-      - ".github/workflows/package-manual.yml"
   workflow_dispatch:
 jobs:
   package:
