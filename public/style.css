@@ -134,3 +134,50 @@ label small,.hint{font-size:10px;font-weight:400;color:#8b91a5;line-height:1.6}
 @media(max-width:760px){.sidebar{position:relative;width:auto;inset:auto;padding:13px 16px 12px;display:grid;grid-template-columns:1fr auto;gap:9px 14px;box-shadow:none}.sidebar-brand{padding:0}.sidebar .brand-mark{width:33px;height:33px;border-radius:11px}.sidebar .brand{font-size:18px}.workspace-label{display:none}.side-link{grid-row:2;height:38px;margin:0;padding:0 11px;font-size:11px;justify-content:center}.side-link:nth-of-type(2){grid-column:1}.side-link:nth-of-type(3){grid-column:2}.sidebar-bottom{display:none}.app-main{margin-left:0;min-height:calc(100vh - 110px)}.topbar{height:61px;padding:0 18px}.topbar-kicker{font-size:8px}.topbar-context strong{font-size:12px}.secure-label{font-size:0;gap:0}.secure-label .security-dot{width:8px;height:8px}.small-avatar{width:29px;height:29px}.app-main main{padding:23px 16px 40px}.welcome-row{min-height:222px;padding:27px 23px;border-radius:20px}.welcome-row h1{font-size:34px;letter-spacing:-1.5px}.welcome-row p{font-size:12px;max-width:240px}.welcome-art{width:35%;min-width:110px;right:-9px;opacity:.8}.art-orbit{width:135px;height:135px}.orbit-two{width:105px;height:105px}.art-mail-card{width:105px;height:100px;border-radius:15px;padding:10px;transform:rotate(7deg) scale(.9)}.art-mail-icon{width:35px;height:31px;font-size:18px;margin:6px auto}.art-check{width:25px;height:25px;right:-9px;bottom:10px;border-radius:9px}.art-line{height:4px;margin:5px auto}.stats-grid{grid-template-columns:1fr;gap:9px;margin:14px 0 29px}.stat-card{min-height:82px;padding:14px 15px;align-items:center}.stat-copy{gap:4px}.stat-copy strong{font-size:18px}.stat-copy small{font-size:10px}.section-head{align-items:flex-start}.section-head h2{font-size:20px}.section-head p{max-width:250px}.section-head .button{min-height:37px;padding:0 10px;font-size:10px}.mailbox-card{align-items:flex-start;flex-direction:column;padding:17px}.actions{width:100%;flex-wrap:wrap}.actions .button{min-height:39px}.empty{padding:29px 17px 32px}.empty-illustration{height:84px}.message-row{grid-template-columns:minmax(0,1fr) auto;gap:6px 12px;padding:15px}.sender,.subject{grid-column:1}.message-row time{grid-column:2;grid-row:1/3;align-self:start}.inbox-head{align-items:flex-start;flex-direction:column}.form-grid{grid-template-columns:minmax(0,1fr) 85px}.auth-topbar{height:67px;padding:0 20px}.auth-topbar .brand{font-size:18px}.auth-topbar .brand-mark{width:33px;height:33px}.auth-topbar-label{font-size:8px;letter-spacing:.8px}.auth-shell main{padding:28px 16px 40px}.auth-card,.form-card{padding:27px 22px;border-radius:21px}.auth-card h1,.form-card h1{font-size:29px}.auth-card:before{margin-bottom:23px}.app-main footer{padding:17px 12px}}
 @media(max-width:380px){.welcome-art{opacity:.42;right:-20px}.welcome-row h1{font-size:30px}.welcome-row p{max-width:220px}.auth-topbar-label{font-size:0}.auth-topbar-label .security-dot{width:8px;height:8px}.section-head{gap:9px}.section-head .button{font-size:10px}.form-grid{grid-template-columns:minmax(0,1fr) 78px}}
 @media(prefers-reduced-motion:reduce){*,*::before,*::after{scroll-behavior:auto!important;transition:none!important}}
+
+/* OKG Mail visual refresh */
+:root{--brand:#6254e8;--brand-dark:#4d3ed0;--navy:#11152d;--line:#e7e9f2;--surface:#fff}
+body{background:#f4f6fb;background-image:radial-gradient(ellipse at 78% -12%,#e8e5ff 0,transparent 32%)}
+.sidebar{background:linear-gradient(165deg,#11152d 0%,#191d3d 55%,#242052 100%);border-right:1px solid #ffffff0d}
+.brand-mark{border-radius:13px;background:linear-gradient(145deg,#a69bff,#5e4cdb);box-shadow:0 8px 22px #6554e85c}
+.side-link{border-radius:13px;min-height:47px;transition:all .2s ease}
+.side-link.active{background:linear-gradient(100deg,#7667f04a,#7667f01c);box-shadow:inset 3px 0 #a99fff,0 8px 20px #080b241f}
+.topbar{background:#ffffffed;box-shadow:0 4px 24px #20264b05}
+.app-main main{max-width:1200px}
+.welcome-row{border:1px solid #e4e0ff;background:radial-gradient(ellipse at 83% 12%,#dcd6ff 0,transparent 37%),linear-gradient(112deg,#fff 0%,#fbfaff 52%,#eeebff 100%);box-shadow:0 18px 45px #32276d0d}
+.welcome-row h1{letter-spacing:-2.2px}
+.welcome-row h1 span{background:linear-gradient(100deg,#7565ef,#4e42c7);background-clip:text;-webkit-background-clip:text;color:transparent}
+.stat-card,.mailbox-list,.email-view{box-shadow:0 8px 28px #1e27500a;border-color:#e7e9f2}
+.stat-card{border-radius:18px;transition:transform .2s ease,box-shadow .2s ease}
+.stat-card:hover{box-shadow:0 13px 32px #20264b10}
+.stat-icon{border-radius:13px}
+.section-head h2{letter-spacing:-.9px}
+.mailbox-list{border-radius:19px}
+.mailbox-card{transition:background .18s ease}
+.mailbox-card:hover{background:#fbfaff}
+.button{border-radius:12px;min-height:43px}
+.button.primary{background:linear-gradient(135deg,#7668f0,#5544d2);box-shadow:0 8px 18px #6254e833}
+.button.primary:hover{box-shadow:0 11px 24px #6254e844;transform:translateY(-2px)}
+.auth-shell{background:radial-gradient(ellipse at 8% 8%,#e7e3ff 0,transparent 38%),radial-gradient(ellipse at 92% 90%,#e5f0ff 0,transparent 36%),#f7f8fc}
+.auth-card,.form-card{border:1px solid #ffffffd9;box-shadow:0 28px 90px #29245b16,0 3px 12px #20204008}
+.auth-card:before{height:5px;width:54px;border-radius:99px}
+input,textarea{border-radius:12px;background:#f9faff}
+input:focus,textarea:focus{box-shadow:0 0 0 4px #7665ec20}
+.notice{border-radius:13px}
+.message-row{transition:background .15s ease}
+.message-row:hover{background:#f8f7ff}
+.email-view{border-radius:20px}
+.email-body{font-family:Inter,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;font-size:14px;color:#343b55}
+@media(max-width:760px){
+  body{background:#f5f6fb}
+  .sidebar{background:linear-gradient(105deg,#11152d,#201d49);padding:13px 15px 11px}
+  .sidebar .brand-mark{width:35px;height:35px}
+  .side-link{min-height:39px;border-radius:11px}
+  .topbar{background:#fff;padding:0 16px}
+  .welcome-row{box-shadow:0 12px 28px #32276d0d}
+  .stats-grid{gap:10px}
+  .stat-card{border-radius:15px}
+  .mailbox-card{border-radius:0}
+  .auth-card,.form-card{box-shadow:0 18px 55px #29245b14}
+}
+@media(hover:hover){.mailbox-card:hover{padding-left:25px}.side-link:hover{transform:translateX(2px)}}
