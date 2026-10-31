@@ -22,6 +22,10 @@ const DATA_DIR = process.env.DATA_DIR || "/data";
 const SESSION_SECRET = process.env.SESSION_SECRET;
 const ENCRYPTION_SECRET = process.env.ENCRYPTION_KEY;
 const REGISTRATION_CODE = process.env.REGISTRATION_CODE;
+const FOUNDER_IMAP_HOST = "imap.foundermail.mx";
+const FOUNDER_SMTP_HOST = "smtp.foundermail.mx";
+const FOUNDER_IMAP_PORT = 993;
+const FOUNDER_SMTP_PORT = 587;
 
 if (!SESSION_SECRET || SESSION_SECRET.length < 32) {
   console.error("SESSION_SECRET must be set to a random value of at least 32 characters.");
@@ -97,9 +101,9 @@ function mailConfig(box) {
 async function withImap(box, fn) {
   const { credentials } = mailConfig(box);
   const client = new ImapFlow({
-    host: box.imap_host,
-    port: box.imap_port,
-    secure: box.imap_port === 993,
+    host: FOUNDER_IMAP_HOST,
+    port: FOUNDER_IMAP_PORT,
+    secure: true,
     auth: { user: box.email, pass: credentials.password },
     logger: false,
     greetingTimeout: 12000,
@@ -145,13 +149,25 @@ app.use(helmet({
 }));
 app.use(express.urlencoded({ extended: false, limit: "32kb" }));
 app.use(session({
-  name: "okg.sid",
-  secret: SESSION_SECRET,
-  resave: false,
-  saveUninitialized: false,
+  name: "okg.sid", secret: SESSION_SECRET, resave: false, saveUninitialized: false,
   store: new SQLiteStore({ db: "sessions.sqlite", dir: DATA_DIR }),
   cookie: { httpOnly: true, secure: process.env.NODE_ENV === "production", sameSite: "lax", maxAge: 8 * 60 * 60 * 1000 }
 }));
+app.use((req, res, next) => {
+  if (!req.session.csrfToken) req.session.csrfToken = crypto.randomBytes(32).toString("hex");
+  const token = req.session.csrfToken;
+  const originalSend = res.send.bind(res);
+  res.send = body => {
+    if (typeof body === "string") body = body.replace(/<form\\b(?=[^>]*method="post")[^>]*>/gi, tag => tag + `<input type="hidden" name="_csrf" value="${token}">`);
+    return originalSend(body);
+  };
+  if (req.method === "POST") {
+    const supplied = Buffer.from(String(req.body?._csrf || ""));
+    const expected = Buffer.from(token);
+    if (supplied.length !== expected.length || !crypto.timingSafeEqual(supplied, expected)) return res.status(403).send("Form verification failed. Refresh the page and try again.");
+  }
+  next();
+});
 const authLimiter = rateLimit({ windowMs: 15 * 60 * 1000, limit: 12, standardHeaders: "draft-8", legacyHeaders: false });
 app.use("/style.css", express.static(path.join(__dirname, "public"), { maxAge: "1h" }));
 app.get("/health", (_req, res) => res.status(200).json({ ok: true, service: "okg-webmail" }));
@@ -206,30 +222,34 @@ app.post("/login", authLimiter, async (req, res) => {
 app.post("/logout", requireAuth, (req, res) => req.session.destroy(() => res.redirect("/login")));
 
 app.get("/connect", requireAuth, (req, res) => {
-  const content = `<section class="form-card"><a class="back" href="/">← Dashboard</a><div class="eyebrow">MAILBOX SETUP</div><h1>Connect a mailbox</h1><p>Use the email address and mailbox password from your email provider. These are not your OKG Webmail password.</p><form method="post" action="/connect"><label>Email address<input name="email" type="email" maxlength="254" required autocomplete="email" placeholder="staff@example.com"></label><label>Mailbox password<input name="password" type="password" maxlength="512" required autocomplete="off"></label><div class="form-grid"><label>IMAP server<input name="imapHost" value="imap.foundermail.mx" required maxlength="253"></label><label>IMAP port<input name="imapPort" type="number" value="993" min="1" max="65535" required></label><label>SMTP server<input name="smtpHost" value="smtp.foundermail.mx" required maxlength="253"></label><label>SMTP port<input name="smtpPort" type="number" value="587" min="1" max="65535" required></label></div><p class="hint">Default settings are prefilled for FounderMail. If your provider gave you different server settings, use those instead.</p><button class="button primary full" type="submit">Test and connect</button></form></section>`;
+  const content = `<section class="form-card"><a class="back" href="/">← Dashboard</a><div class="eyebrow">MAILBOX SETUP</div><h1>Connect a mailbox</h1><p>Use your full FounderMail address and the mailbox password from the FounderMail mailbox page. This is separate from your OKG Mail password.</p><form method="post" action="/connect"><label>Email address<input name="email" type="email" maxlength="254" required autocomplete="email" placeholder="staff@onekidgaming.blitz.cloud"></label><label>FounderMail mailbox password<input name="password" type="password" maxlength="512" required autocomplete="off"></label><div class="form-grid"><label>Incoming IMAP server<input value="imap.foundermail.mx" readonly></label><label>Port<input value="993" readonly></label><label>Outgoing SMTP server<input value="smtp.foundermail.mx" readonly></label><label>Port<input value="587" readonly></label></div><p class="hint">We test incoming mail over SSL/TLS and outgoing mail using mandatory STARTTLS before saving your mailbox.</p><button class="button primary full" type="submit">Test and connect mailbox</button></form></section>`;
   res.send(page("Connect mailbox", content, getUser(req)));
 });
 app.post("/connect", requireAuth, authLimiter, async (req, res) => {
   const email = String(req.body.email || "").trim().toLowerCase();
   const password = String(req.body.password || "");
-  const imapHost = String(req.body.imapHost || "").trim();
-  const smtpHost = String(req.body.smtpHost || "").trim();
-  const imapPort = Number(req.body.imapPort);
-  const smtpPort = Number(req.body.smtpPort);
-  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email) || !password || password.length > 512 ||
-      !/^[a-z0-9.-]+$/i.test(imapHost) || !/^[a-z0-9.-]+$/i.test(smtpHost) ||
-      !Number.isInteger(imapPort) || imapPort < 1 || imapPort > 65535 ||
-      !Number.isInteger(smtpPort) || smtpPort < 1 || smtpPort > 65535) {
+  const imapHost = FOUNDER_IMAP_HOST;
+  const smtpHost = FOUNDER_SMTP_HOST;
+  const imapPort = FOUNDER_IMAP_PORT;
+  const smtpPort = FOUNDER_SMTP_PORT;
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email) || !password || password.length > 512) {
     return res.status(400).send(page("Invalid settings", '<section class="auth-card"><h1>Check the mailbox settings</h1><p>One or more fields are invalid.</p><a href="/connect">Try again</a></section>', getUser(req)));
   }
   try {
     const client = new ImapFlow({
-      host: imapHost, port: imapPort, secure: imapPort === 993,
+      host: FOUNDER_IMAP_HOST, port: FOUNDER_IMAP_PORT, secure: true,
       auth: { user: email, pass: password }, logger: false,
       greetingTimeout: 10000, socketTimeout: 15000
     });
     await client.connect();
     await client.logout();
+    const smtpTester = nodemailer.createTransport({
+      host: FOUNDER_SMTP_HOST, port: FOUNDER_SMTP_PORT, secure: false, requireTLS: true,
+      tls: { minVersion: "TLSv1.2" }, auth: { user: email, pass: password },
+      connectionTimeout: 12000, greetingTimeout: 12000, socketTimeout: 15000
+    });
+    await smtpTester.verify();
+    await smtpTester.close();
     db.prepare("INSERT INTO mailboxes (user_id, email, imap_host, imap_port, smtp_host, smtp_port, credentials_enc) VALUES (?, ?, ?, ?, ?, ?, ?)")
       .run(req.session.userId, email, imapHost, imapPort, smtpHost, smtpPort, encrypt({ password }));
     dashboard(req, res, "Mailbox connected successfully.");
@@ -314,8 +334,8 @@ app.post("/mail/:id/send", requireAuth, authLimiter, async (req, res) => {
   try {
     const { credentials } = mailConfig(box);
     const transporter = nodemailer.createTransport({
-      host: box.smtp_host, port: box.smtp_port, secure: box.smtp_port === 465,
-      requireTLS: box.smtp_port === 587,
+      host: FOUNDER_SMTP_HOST, port: FOUNDER_SMTP_PORT, secure: false, requireTLS: true,
+      tls: { minVersion: "TLSv1.2" },
       auth: { user: box.email, pass: credentials.password },
       connectionTimeout: 12000, greetingTimeout: 12000, socketTimeout: 20000
     });
