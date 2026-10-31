@@ -1,0 +1,24 @@
+name: Package OKG Mail for manual recovery
+on:
+  push:
+    branches: [main]
+    paths:
+      - ".github/workflows/package-manual.yml"
+  workflow_dispatch:
+jobs:
+  package:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci --omit=dev
+      - name: Package runtime
+        run: tar -czf /tmp/okg-webmail-runtime.tar.gz --exclude=.git -C "$GITHUB_WORKSPACE" .
+      - uses: actions/upload-artifact@v4
+        with:
+          name: okg-webmail-runtime
+          path: /tmp/okg-webmail-runtime.tar.gz
+          retention-days: 1
