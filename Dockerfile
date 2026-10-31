@@ -10,6 +10,7 @@ COPY . .
 ENV NODE_ENV=production
 ENV PORT=3000
 ENV DATA_DIR=/data
+VOLUME ["/data"]
 RUN mkdir -p /data && chown -R node:node /app /data
 
 USER node
