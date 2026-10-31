@@ -158,7 +158,7 @@ app.use((req, res, next) => {
   const token = req.session.csrfToken;
   const originalSend = res.send.bind(res);
   res.send = body => {
-    if (typeof body === "string") body = body.replace(/<form\\b(?=[^>]*method="post")[^>]*>/gi, tag => tag + `<input type="hidden" name="_csrf" value="${token}">`);
+    if (typeof body === "string") body = body.replace(/<form\b(?=[^>]*method="post")[^>]*>/gi, tag => tag + `<input type="hidden" name="_csrf" value="${token}">`);
     return originalSend(body);
   };
   if (req.method === "POST") {
