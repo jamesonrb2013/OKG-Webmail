@@ -6,8 +6,11 @@ A Dockerfile-based, self-hosted webmail client for existing IMAP/SMTP mailboxes.
 
 - Individual OKG Webmail accounts with password hashing.
 - Invite-code-gated registration.
-- Each user can connect their own existing IMAP/SMTP mailbox.
-- Inbox listing, message reading, replying by compose, and sending email.
+- Each staff member can connect their own FounderMail mailbox.
+- Inbox listing, message reading, reply-by-compose, and outbound email.
+- Both IMAP and SMTP credentials are tested before a mailbox is saved.
+- SMTP uses mandatory STARTTLS; IMAP uses SSL/TLS.
+- Session-bound CSRF protection on state-changing forms.
 - Mailbox passwords encrypted at rest with AES-256-GCM.
 - SQLite database and session store under `DATA_DIR` (default `/data`).
 - Responsive mobile-friendly interface.
@@ -36,11 +39,13 @@ Generate two independent secrets locally with a password manager or a cryptograp
 
 ## Mail server settings
 
-The connect form starts with these values:
-- IMAP: `imap.foundermail.mx:993` (TLS)
-- SMTP: `smtp.foundermail.mx:587` (STARTTLS)
+FounderMail settings are fixed server-side to prevent arbitrary mail-server connections:
+- IMAP: `imap.foundermail.mx:993` (SSL/TLS)
+- SMTP: `smtp.foundermail.mx:587` (mandatory STARTTLS)
+- Username: the full mailbox email address
+- Password: the mailbox password from the FounderMail mailbox page
 
-Confirm these hostnames and ports with FounderMail before rollout. Other providers can use their own settings.
+The application verifies both incoming and outgoing authentication before saving the mailbox. Actual sends remain subject to FounderMail's verified-domain, outbound-recipient, and monthly allowance rules.
 
 ## Important security notes
 
